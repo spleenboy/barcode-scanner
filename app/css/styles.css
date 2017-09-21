@@ -30,6 +30,16 @@ body {
   z-index: 10;
 }
 
+.app__stop {
+  color: white;
+  border: 1px solid white;
+  padding: 5px;
+  margin: 0 10px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+}
+
 .app__header-icon {
   width: 35px;
   height: 35px;

@@ -1,4 +1,4 @@
-import QRReader from './vendor/qrscan.js';
+import Scanner from './scanner.js';
 import {snackbar} from './snackbar.js';
 import styles from '../css/styles.css';
 import isURL from 'is-url';
@@ -26,6 +26,7 @@ window.addEventListener("DOMContentLoaded", () => {
   var frame = null;
   var selectPhotoBtn = document.querySelector('.app__select-photos');
   var dialogElement = document.querySelector('.app__dialog');
+  var stopBtn = document.querySelector('.app__stop');
   var dialogOverlayElement = document.querySelector('.app__dialog-overlay');
   var dialogOpenBtnElement = document.querySelector('.app__dialog-open');
   var dialogCloseBtnElement = document.querySelector('.app__dialog-close');
@@ -35,18 +36,19 @@ window.addEventListener("DOMContentLoaded", () => {
   var infoSvg = document.querySelector('.app__header-icon svg');
   var videoElement = document.querySelector('video');
   window.appOverlay = document.querySelector('.app__overlay');
+  var scanner = new Scanner(videoElement);
     
   //Initializing qr scanner
   window.addEventListener('load', (event) => {
-    QRReader.init(); //To initialize QR Scanner
     // Set camera overlay size
     setTimeout(() => { 
       setCameraOverlay();
       if (!window.iOS) {
-        scan();
+        scanner.start(); //To initialize QR Scanner
       }
     }, 1000);
   });
+
 
   function setCameraOverlay() {
     window.appOverlay.style.borderStyle = 'solid';
@@ -58,10 +60,25 @@ window.addEventListener("DOMContentLoaded", () => {
     frame.src = '';
     frame.id = 'frame';
   }
+
+  function toggleCamera() {
+    if (scanner.active) {
+      stopBtn.innerHTML = 'Start';
+      scanningEle.style.display = 'none';
+      scanner.stop();
+    } else {
+      stopBtn.innerHTML = 'Stop';
+      scanningEle.style.display = 'block';
+      scanner.start();
+    }
+  }
   
   //Dialog close btn event
   dialogCloseBtnElement.addEventListener('click', hideDialog, false);
   dialogOpenBtnElement.addEventListener('click', openInBrowser, false);
+
+  //Toggle button
+  stopBtn.addEventListener('click', toggleCamera, false);
 
   //To open result in browser
   function openInBrowser() {
@@ -72,20 +89,21 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   //Scan
-  function scan() {
-    if (!window.iOS) scanningEle.style.display = 'block';
-    QRReader.scan((result) => {
-      copiedText = result;
-      textBoxEle.value = result;
-      textBoxEle.select();
-      scanningEle.style.display = 'none';
-      if (isURL(result)) {
-        dialogOpenBtnElement.style.display = 'inline-block';
-      }
-      dialogElement.classList.remove('app__dialog--hide');
-      dialogOverlayElement.classList.remove('app__dialog--hide');
-    });
-  }
+  if (!window.iOS) scanningEle.style.display = 'block';
+  scanner.onsuccess = (event) => {
+    console.log('Scanned!', event);
+    var result = event.data[0][2];
+    copiedText = result;
+    textBoxEle.value = result;
+    textBoxEle.select();
+    scanningEle.style.display = 'none';
+    if (isURL(result)) {
+      dialogOpenBtnElement.style.display = 'inline-block';
+    }
+    dialogElement.classList.remove('app__dialog--hide');
+    dialogOverlayElement.classList.remove('app__dialog--hide');
+    scanner.stop();
+  };
 
   //Hide dialog
   function hideDialog() {
@@ -99,7 +117,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     dialogElement.classList.add('app__dialog--hide');
     dialogOverlayElement.classList.add('app__dialog--hide');
-    scan();
+    scanner.start();
   }
 
   // For iOS support

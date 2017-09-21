@@ -147,4 +147,12 @@ QRReader.scan = function (callback) {
 	newDecoderFrame();
 }
 
+QRReader.stop = function () {
+	if (!QRReader.active || !QRReader.webcam.srcObject) {
+		return false;
+	}
+	QRReader.webcam.srcObject.getTracks()[0].stop();
+	QRReader.active = false;
+}
+
 module.exports = QRReader;
